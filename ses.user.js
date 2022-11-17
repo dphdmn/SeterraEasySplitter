@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SES: Seterra easy splitter
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  keep track of your progress!
 // @author       dphdmn
 // @match        https://www.geoguessr.com/seterra/*
@@ -38,6 +38,9 @@
 	var mytimestring;
 	var pbinfo;
 	var pluschar;
+	var tasktimes = [];
+	var latesttime = 0;
+	var splittime;
 	var savePBs = false;
 	resetbutton = document.createElement("button");
 	resetbutton.type = "button";
@@ -61,6 +64,8 @@
 			mytimes = [];
 			colors = [];
 			difs = [];
+			tasktimes = [];
+			latesttime = 0;
 			mylog.push(headers)
 		}
 		if (correctClicks == 1) {
@@ -76,7 +81,12 @@
 			t = gameDuration;
 			mytime = t / 1000;
 			mytimes.push(t);
-
+			splittime = t - latesttime;
+			latesttime = t;
+			tasktimes.push({
+				"task": "(" + correctClicks.toString() + ") " + curTask,
+				"time": splittime
+			});
 			if (!pbisdef) {
 				pbsplit = "-";
 				pbsplittext = pbsplit;
@@ -96,9 +106,8 @@
 				pbsplittext = (pbsplit / 1000).toString();
 				mytimestring = mytime.toString() + " (" + pluschar + (dif / 1000).toString() + ")";
 			}
-			mylog.push([correctClicks.toString(), mytimestring, pbsplittext, score.toString() + "%", curTask]);
+			mylog.push([correctClicks.toString(), mytimestring, pbsplittext, score.toString() + "%", curTask + " (" + (splittime / 1000).toString() + ")"]);
 			if (questionCount == correctClicks) {
-				tbl = document.createElement('div');
 				savePBs = false;
 				if (score == 100) {
 					if (!pbisdef) {
@@ -128,6 +137,7 @@
 				}
 				pbinfo.appendChild(document.createTextNode(saved));
 				statsDiv.classList.add("table");
+				tbl = document.createElement('div');
 				tbl.classList.add("table");
 				mylog.forEach((row, rowindex) => {
 					const tr = document.createElement('div');
@@ -139,9 +149,37 @@
 							td.style.color = colors[rowindex - 1];
 						}
 						td.classList.add("cell");
-						tr.appendChild(td);
 						td.appendChild(document.createTextNode(cell));
+						tr.appendChild(td);
 					});
+				});
+				statsDiv.appendChild(tbl);
+				var tasksheader = document.createElement("p");
+				tasksheader.style.textAlign = "center";
+				tasksheader.appendChild(document.createTextNode("Task timings, from slowest to fastest"));
+				statsDiv.appendChild(tasksheader);
+				tasktimes = tasktimes.sort((a, b) => b.time - a.time);
+				tasktimes.unshift({
+					"task": "Task",
+					"time": "Time"
+				})
+				tbl = document.createElement('div');
+				tbl.classList.add("table");
+				tasktimes.forEach(row => {
+					const tr = document.createElement('div');
+					tr.classList.add("row");
+					tbl.appendChild(tr);
+					var td = document.createElement('div');
+					td.classList.add("cell");
+					td.appendChild(document.createTextNode(row.task));
+					tr.appendChild(td);
+					td = document.createElement('div');
+					td.classList.add("cell");
+					if (row.time != "Time") {
+						row.time = (row.time / 1000).toString();
+					}
+					td.appendChild(document.createTextNode(row.time));
+					tr.appendChild(td);
 				});
 				statsDiv.appendChild(tbl);
 			}
