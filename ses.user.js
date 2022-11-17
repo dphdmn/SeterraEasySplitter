@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SES: Seterra easy splitter
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  keep track of your progress!
 // @author       dphdmn
 // @match        https://www.geoguessr.com/seterra/*
@@ -41,6 +41,7 @@
 	var tasktimes = [];
 	var latesttime = 0;
 	var splittime;
+	var isDarkMode;
 	var savePBs = false;
 	resetbutton = document.createElement("button");
 	resetbutton.type = "button";
@@ -70,7 +71,6 @@
 		}
 		if (correctClicks == 1) {
 			gameSave = gameMode + window.location.href;
-			//GM_setValue(gameSave, undefined);
 			pbs = GM_getValue(gameSave)
 			pbisdef = (pbs !== undefined);
 		}
@@ -108,6 +108,9 @@
 			}
 			mylog.push([correctClicks.toString(), mytimestring, pbsplittext, score.toString() + "%", curTask + " (" + (splittime / 1000).toString() + ")"]);
 			if (questionCount == correctClicks) {
+				var dmcb = document.getElementById("chkDarkMode");
+				isDarkMode = dmcb.checked;
+				console.log(document.body.style);
 				savePBs = false;
 				if (score == 100) {
 					if (!pbisdef) {
@@ -125,10 +128,6 @@
 				}
 				statsDiv.appendChild(resetbutton);
 				statsDiv.appendChild(document.createElement("br"));
-				//statsDiv.appendChild(document.createTextNode("GameTypeID: " + gameSave));
-				//statsDiv.appendChild(document.createElement("br"));
-				//statsDiv.appendChild(document.createTextNode("(different for any gamemode and ?things after url)"));
-				// statsDiv.appendChild(document.createElement("br"));
 				pbinfo = document.createElement("p");
 				statsDiv.appendChild(pbinfo);
 				pbinfo.style.textAlign = "center";
@@ -142,6 +141,13 @@
 				mylog.forEach((row, rowindex) => {
 					const tr = document.createElement('div');
 					tr.classList.add("row");
+					if (isDarkMode && rowindex > 0) {
+						if (rowindex % 2 == 0) {
+							tr.style.background = "#303030";
+						} else {
+							tr.style.background = "#404040";
+						}
+					}
 					tbl.appendChild(tr);
 					row.forEach((cell, cellindex) => {
 						const td = document.createElement('div');
@@ -165,9 +171,16 @@
 				})
 				tbl = document.createElement('div');
 				tbl.classList.add("table");
-				tasktimes.forEach(row => {
+				tasktimes.forEach((row, rowindex) => {
 					const tr = document.createElement('div');
 					tr.classList.add("row");
+					if (isDarkMode && rowindex > 0) {
+						if (rowindex % 2 == 0) {
+							tr.style.background = "#303030";
+						} else {
+							tr.style.background = "#404040";
+						}
+					}
 					tbl.appendChild(tr);
 					var td = document.createElement('div');
 					td.classList.add("cell");
