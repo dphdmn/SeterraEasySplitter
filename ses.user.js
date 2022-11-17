@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SES: Seterra easy splitter
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.4.1
 // @description  keep track of your progress!
 // @author       dphdmn
 // @match        https://www.geoguessr.com/seterra/*
@@ -248,7 +248,7 @@ function handleSpeed(splits, smooth) {
 						fill: false
 					});
 				}
-
+                var taskinfo = [...tasktimes];
 				chart1 = new Chart(cnvTime, {
 					type: "line",
 					data: {
@@ -266,7 +266,16 @@ function handleSpeed(splits, smooth) {
 							mode: 'index',
 							axis: 'x',
 							intersect: false
-						}
+						},
+                        plugins:{
+                            tooltip:{
+                                callbacks:{
+                                    title: function(context){
+                                        return taskinfo[context[0].dataIndex].task;
+                                    }
+                                }
+                            }
+                        }
 					}
 				});
 				chart2 = new Chart(cnvSpeed, {
@@ -286,7 +295,16 @@ function handleSpeed(splits, smooth) {
 							mode: 'index',
 							axis: 'x',
 							intersect: false
-						}
+						},
+                        plugins:{
+                            tooltip:{
+                                callbacks:{
+                                    title: function(context){
+                                        return taskinfo[context[0].dataIndex].task;
+                                    }
+                                }
+                            }
+                        }
 					}
 				});
 				statsDiv.classList.add("table");
