@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SES: Seterra easy splitter
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.3.3
 // @description  keep track of your progress!
 // @author       dphdmn
 // @match        https://www.geoguessr.com/seterra/*
@@ -310,7 +310,7 @@ function handleSpeed(splits, smooth) {
                             duration: 0
                         },
                         interaction: {
-                            mode: 'nearest',
+                            mode: 'index',
                             axis: 'x',
                             intersect: false
                         }
@@ -330,7 +330,7 @@ function handleSpeed(splits, smooth) {
                             duration: 0
                         },
                         interaction: {
-                            mode: 'nearest',
+                            mode: 'index',
                             axis: 'x',
                             intersect: false
                         }
