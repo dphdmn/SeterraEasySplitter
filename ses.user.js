@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SES: Seterra easy splitter
 // @namespace    http://tampermonkey.net/
-// @version      1.3.3
+// @version      1.4
 // @description  keep track of your progress!
 // @author       dphdmn
 // @match        https://www.geoguessr.com/seterra/*
