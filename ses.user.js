@@ -24,7 +24,7 @@ function handleSpeed(splits, smooth) {
             subsum += splits[i];
             subam += 1;
         }
-        results.push(subsum / subam);
+        results.push(subam / subsum);
     });
     return results;
 }
@@ -273,7 +273,7 @@ function handleSpeed(splits, smooth) {
                     fill: false
                 });
                 speedSets.push({
-                    data: handleSpeed(speedData, 0),
+                    data: handleSpeed(speedData, slider.value),
                     label: "Speed",
                     borderColor: "#3e95cd",
                     fill: false
@@ -289,7 +289,7 @@ function handleSpeed(splits, smooth) {
                         fill: false
                     });
                     speedSets.push({
-                        data: handleSpeed(speedDataPB, 0),
+                        data: handleSpeed(speedDataPB, slider.value),
                         label: "Speed (PB)",
                         borderColor: "#953ecd",
                         fill: false
@@ -308,6 +308,11 @@ function handleSpeed(splits, smooth) {
                         responsive: false,
                         animation: {
                             duration: 0
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
                         }
                     }
                 });
@@ -323,6 +328,11 @@ function handleSpeed(splits, smooth) {
                         responsive: false,
                         animation: {
                             duration: 0
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
                         }
                     }
                 });
