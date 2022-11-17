@@ -110,7 +110,6 @@
 			if (questionCount == correctClicks) {
 				var dmcb = document.getElementById("chkDarkMode");
 				isDarkMode = dmcb.checked;
-				console.log(document.body.style);
 				savePBs = false;
 				if (score == 100) {
 					if (!pbisdef) {
