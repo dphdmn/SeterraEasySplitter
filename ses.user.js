@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name SES: Seterra easy splitter
 // @namespace http://tampermonkey.net/
-// @version 1.4.1
+// @version 1.5
 // @description keep track of your progress!
 // @author dphdmn
 // @match https://www.geoguessr.com/seterra/*
@@ -31,7 +31,6 @@ function handleSpeed(splits, smooth) {
 
 (function () {
     'use strict';
-    console.log(GM_getValue("egg"))
     var mycss = ".table{margin:0 0 40px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.2);display:table}.row{display:table-row;background:#f6f6f6}.row:nth-of-type(odd){background:#e9e9e9}.row:first-child{font-weight:900;color:#fff;background:#1f7a7d}.row.green{background:#27ae60}.row.blue{background:#2980b9}.cell{padding:6px 12px;display:table-cell}@media screen and (max-width:580px){.table{display:block}.row{padding:14px 0 7px;display:block}.row.header{padding:0;height:6px}.row.header .cell{display:none}.row .cell{margin-bottom:10px}.row .cell:before{margin-bottom:3px;content:attr(data-title);min-width:98px;font-size:10px;line-height:10px;font-weight:700;text-transform:uppercase;color:#969696;display:block}.cell{padding:2px 16px;display:block}}";
     var style = document.createElement('style');
     style.innerHTML = mycss;
@@ -67,6 +66,9 @@ function handleSpeed(splits, smooth) {
     var sliderValueP;
     var speedSets = [];
     var timesSets = [];
+    var pacedata = [];
+    var speedpace = [];
+    var pbfinal;
     var chart1;
     var chart2;
     const speedDataTxt = "SPEED_DATA_";
@@ -99,6 +101,8 @@ function handleSpeed(splits, smooth) {
             splittimeList = [];
             speedSets = [];
             timesSets = [];
+            pacedata = [];
+            speedpace = [];
             latesttime = 0;
             mylog.push(headers)
         }
@@ -107,6 +111,9 @@ function handleSpeed(splits, smooth) {
             pbs = GM_getValue(gameSave)
             speedDataPB = GM_getValue(speedDataTxt + gameSave)
             pbisdef = (pbs !== undefined);
+            if (pbisdef){
+                pbfinal = pbs.slice(-1)[0];
+            }
         }
         if (correctClicks > my_correct) {
             my_correct = correctClicks;
@@ -118,6 +125,7 @@ function handleSpeed(splits, smooth) {
             splittime = t - latesttime;
             splittimeList.push(splittime / 1000);
             latesttime = t;
+            speedpace.push(questionCount*mytime/correctClicks)
             tasktimes.push({
                 "task": "(" + correctClicks.toString() + ") " + curTask,
                 "time": splittime
@@ -130,6 +138,7 @@ function handleSpeed(splits, smooth) {
             } else {
                 pbsplit = pbs[correctClicks - 1];
                 dif = t - pbsplit;
+                pacedata.push(pbfinal+dif);
                 difs.push(dif);
                 if (dif > 0) {
                     pluschar = "+";
@@ -151,7 +160,7 @@ function handleSpeed(splits, smooth) {
                     if (!pbisdef) {
                         savePBs = true;
                     } else {
-                        if (pbs.slice(-1)[0] > mytimes.slice(-1)[0]) {
+                        if (pbfinal > mytimes.slice(-1)[0]) {
                             savePBs = true;
                         }
                     }
@@ -232,7 +241,6 @@ function handleSpeed(splits, smooth) {
                     fill: false
                 });
                 if (pbisdef) {
-
                     timesSets.push({
                         data: pbs.map(function (item) {
                             return item / 1000
@@ -247,7 +255,21 @@ function handleSpeed(splits, smooth) {
                         borderColor: "#953ecd",
                         fill: false
                     });
+                    timesSets.push({
+                        data: pacedata.map(function (item) {
+                            return item / 1000
+                        }),
+                        label: "Pace (by PB difference)",
+                        borderColor: "#ff0000",
+                        fill: false
+                    });
                 }
+                timesSets.push({
+                    data: speedpace,
+                    label: "Pace (by current speed)",
+                    borderColor: "#ff3ecd",
+                    fill: false
+                });
                 var taskinfo = [...tasktimes];
                 chart1 = new Chart(cnvTime, {
                     type: "line",
