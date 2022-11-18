@@ -1,14 +1,14 @@
 // ==UserScript==
-// @name         SES: Seterra easy splitter
-// @namespace    http://tampermonkey.net/
-// @version      1.4.1
+// @name		 SES: Seterra easy splitter
+// @namespace	http://tampermonkey.net/
+// @version	  1.4.1
 // @description  keep track of your progress!
-// @author       dphdmn
-// @match        https://www.geoguessr.com/seterra/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=geoguessr.com
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @require      https://cdn.jsdelivr.net/npm/chart.js
+// @author	   dphdmn
+// @match		https://www.geoguessr.com/seterra/*
+// @icon		 https://www.google.com/s2/favicons?sz=64&domain=geoguessr.com
+// @grant		GM_setValue
+// @grant		GM_getValue
+// @require	  https://cdn.jsdelivr.net/npm/chart.js
 // ==/UserScript==
 function handleSpeed(splits, smooth) {
 	var subsum;
@@ -248,7 +248,7 @@ function handleSpeed(splits, smooth) {
 						fill: false
 					});
 				}
-                var taskinfo = [...tasktimes];
+				var taskinfo = [...tasktimes];
 				chart1 = new Chart(cnvTime, {
 					type: "line",
 					data: {
@@ -267,15 +267,15 @@ function handleSpeed(splits, smooth) {
 							axis: 'x',
 							intersect: false
 						},
-                        plugins:{
-                            tooltip:{
-                                callbacks:{
-                                    title: function(context){
-                                        return taskinfo[context[0].dataIndex].task;
-                                    }
-                                }
-                            }
-                        }
+						plugins:{
+							tooltip:{
+								callbacks:{
+									title: function(context){
+										return taskinfo[context[0].dataIndex].task;
+									}
+								}
+							}
+						}
 					}
 				});
 				chart2 = new Chart(cnvSpeed, {
@@ -296,15 +296,15 @@ function handleSpeed(splits, smooth) {
 							axis: 'x',
 							intersect: false
 						},
-                        plugins:{
-                            tooltip:{
-                                callbacks:{
-                                    title: function(context){
-                                        return taskinfo[context[0].dataIndex].task;
-                                    }
-                                }
-                            }
-                        }
+						plugins:{
+							tooltip:{
+								callbacks:{
+									title: function(context){
+										return taskinfo[context[0].dataIndex].task;
+									}
+								}
+							}
+						}
 					}
 				});
 				statsDiv.classList.add("table");
