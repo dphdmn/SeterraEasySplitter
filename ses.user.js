@@ -1,14 +1,14 @@
 // ==UserScript==
-// @name		 SES: Seterra easy splitter
-// @namespace	http://tampermonkey.net/
-// @version	  1.4.1
-// @description  keep track of your progress!
-// @author	   dphdmn
-// @match		https://www.geoguessr.com/seterra/*
-// @icon		 https://www.google.com/s2/favicons?sz=64&domain=geoguessr.com
-// @grant		GM_setValue
-// @grant		GM_getValue
-// @require	  https://cdn.jsdelivr.net/npm/chart.js
+// @name SES: Seterra easy splitter
+// @namespace http://tampermonkey.net/
+// @version 1.4.1
+// @description keep track of your progress!
+// @author dphdmn
+// @match https://www.geoguessr.com/seterra/*
+// @icon https://www.google.com/s2/favicons?sz=64&domain=geoguessr.com
+// @grant GM_setValue
+// @grant GM_getValue
+// @require https://cdn.jsdelivr.net/npm/chart.js
 // ==/UserScript==
 function handleSpeed(splits, smooth) {
 	var subsum;
