@@ -11,7 +11,7 @@
 // @require https://cdn.jsdelivr.net/npm/chart.js
 // ==/UserScript==
 function handleSpeed(splits, smooth) {
-    var subsum;
+    var subsum ;
     var subam;
     var results = []
     splits.forEach((_, index) => {
