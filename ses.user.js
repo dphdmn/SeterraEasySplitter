@@ -29,7 +29,7 @@ function handleSpeed(splits, smooth) {
 	return results;
 }
 
-(function() {
+(function () {
 	'use strict';
 	console.log(GM_getValue("egg"))
 	var mycss = ".table{margin:0 0 40px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.2);display:table}.row{display:table-row;background:#f6f6f6}.row:nth-of-type(odd){background:#e9e9e9}.row:first-child{font-weight:900;color:#fff;background:#1f7a7d}.row.green{background:#27ae60}.row.blue{background:#2980b9}.cell{padding:6px 12px;display:table-cell}@media screen and (max-width:580px){.table{display:block}.row{padding:14px 0 7px;display:block}.row.header{padding:0;height:6px}.row.header .cell{display:none}.row .cell{margin-bottom:10px}.row .cell:before{margin-bottom:3px;content:attr(data-title);min-width:98px;font-size:10px;line-height:10px;font-weight:700;text-transform:uppercase;color:#969696;display:block}.cell{padding:2px 16px;display:block}}";
@@ -75,7 +75,7 @@ function handleSpeed(splits, smooth) {
 	resetbutton.type = "button";
 	resetbutton.innerHTML = 'Reset PB splits for that gamemode';
 	resetbutton.style = "background-color:#f44336;border:none;color:#fff;padding:15px 32px;text-align:center;text-decoration:none;display:inline-block;font-size:15px";
-	resetbutton.onclick = function() {
+	resetbutton.onclick = function () {
 		GM_setValue(gameSave, undefined);
 		alert("Your PBs very successfully removed from the Earth! (for this mode only, don't worry)");
 	};
@@ -218,7 +218,7 @@ function handleSpeed(splits, smooth) {
 				statsDiv.appendChild(slider);
 				statsDiv.appendChild(cnvSpeed);
 				timesSets.push({
-					data: mytimes.map(function(item) {
+					data: mytimes.map(function (item) {
 						return item / 1000
 					}),
 					label: "Time",
@@ -234,7 +234,7 @@ function handleSpeed(splits, smooth) {
 				if (pbisdef) {
 
 					timesSets.push({
-						data: pbs.map(function(item) {
+						data: pbs.map(function (item) {
 							return item / 1000
 						}),
 						label: "Time (PB)",
@@ -267,10 +267,10 @@ function handleSpeed(splits, smooth) {
 							axis: 'x',
 							intersect: false
 						},
-						plugins:{
-							tooltip:{
-								callbacks:{
-									title: function(context){
+						plugins: {
+							tooltip: {
+								callbacks: {
+									title: function (context) {
 										return taskinfo[context[0].dataIndex].task;
 									}
 								}
@@ -296,10 +296,10 @@ function handleSpeed(splits, smooth) {
 							axis: 'x',
 							intersect: false
 						},
-						plugins:{
-							tooltip:{
-								callbacks:{
-									title: function(context){
+						plugins: {
+							tooltip: {
+								callbacks: {
+									title: function (context) {
 										return taskinfo[context[0].dataIndex].task;
 									}
 								}
@@ -379,7 +379,7 @@ function handleSpeed(splits, smooth) {
 					tr.appendChild(td);
 				});
 				statsDiv.appendChild(tbl);
-				slider.oninput = function() {
+				slider.oninput = function () {
 					sliderValueP.innerHTML = parseInt(slider.value) + 1;
 					var newsets = []
 					newsets.push({
