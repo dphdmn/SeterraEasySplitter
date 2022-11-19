@@ -9,6 +9,8 @@
 // @grant GM_setValue
 // @grant GM_getValue
 // @require https://cdn.jsdelivr.net/npm/chart.js
+// @require https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js
+// @require https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.2.1/chartjs-plugin-zoom.min.js
 // ==/UserScript==
 function handleSpeed(splits, smooth) {
     var subsum;
@@ -27,6 +29,53 @@ function handleSpeed(splits, smooth) {
         results.push(subam / subsum);
     });
     return results;
+}
+function setHistoryData(historyData, checkdata) {
+    var result = [];
+    var todaydate = (new Date()).toJSON().slice(0, 10);
+    result.push({
+        data: historyData.map(function (item) {
+            if (item.PB && (checkdata == false || item.Date === todaydate)) {
+                return item.Time;
+            } else {
+                return null;
+            }
+        }),
+        label: "PB only runs",
+        borderColor: "#953ecd",
+        fill: false,
+        pointBackgroundColor: "#953ecd",
+        pointRadius: 10,
+        pointHoverRadius: 15
+    });
+    result.push({
+        data: historyData.map(function (item) {
+            if (item.Score == 100 && (checkdata == false || item.Date === todaydate)) {
+                return item.Time;
+            } else {
+                return null;
+            }
+        }),
+        label: "100% only runs",
+        borderColor: "#ff3ecd",
+        fill: false,
+        pointBackgroundColor: "#ff3ecd",
+        pointRadius: 5,
+        pointHoverRadius: 10
+    });
+    result.push({
+        data: historyData.map(function (item) {
+            if (checkdata == false || item.Date === todaydate) {
+                return item.Time
+            } else {
+                return null;
+            }
+        }),
+        label: "All runs",
+        borderColor: "#3e95cd",
+        fill: false
+    });
+    return result;
 }
 
 (function () {
@@ -68,10 +117,14 @@ function handleSpeed(splits, smooth) {
     var timesSets = [];
     var pacedata = [];
     var speedpace = [];
+    var historygraphdata = [];
     var pbfinal;
     var chart1;
     var chart2;
+    var chart3;
+    var pbhistlist;
     const speedDataTxt = "SPEED_DATA_";
+    const historySlotTxt = "PB_HISTORY";
     var savePBs = false;
     resetbutton = document.createElement("button");
     resetbutton.type = "button";
@@ -79,6 +132,7 @@ function handleSpeed(splits, smooth) {
     resetbutton.style = "background-color:#f44336;border:none;color:#fff;padding:15px 32px;text-align:center;text-decoration:none;display:inline-block;font-size:15px";
     resetbutton.onclick = function () {
         GM_setValue(gameSave, undefined);
+        GM_setValue(historySlotTxt + gameSave, undefined);
         alert("Your PBs very successfully removed from the Earth! (for this mode only, don't worry)");
     };
     const headers = ["N", "Time", "PB split", "Score", "Task"]
@@ -103,6 +157,7 @@ function handleSpeed(splits, smooth) {
             timesSets = [];
             pacedata = [];
             speedpace = [];
+            historygraphdata = [];
             latesttime = 0;
             mylog.push(headers)
         }
@@ -111,7 +166,7 @@ function handleSpeed(splits, smooth) {
             pbs = GM_getValue(gameSave)
             speedDataPB = GM_getValue(speedDataTxt + gameSave)
             pbisdef = (pbs !== undefined);
-            if (pbisdef){
+            if (pbisdef) {
                 pbfinal = pbs.slice(-1)[0];
             }
         }
@@ -125,7 +180,7 @@ function handleSpeed(splits, smooth) {
             splittime = t - latesttime;
             splittimeList.push(splittime / 1000);
             latesttime = t;
-            speedpace.push(questionCount*mytime/correctClicks)
+            speedpace.push(questionCount * mytime / correctClicks)
             tasktimes.push({
                 "task": "(" + correctClicks.toString() + ") " + curTask,
                 "time": splittime
@@ -138,7 +193,7 @@ function handleSpeed(splits, smooth) {
             } else {
                 pbsplit = pbs[correctClicks - 1];
                 dif = t - pbsplit;
-                pacedata.push(pbfinal+dif);
+                pacedata.push(pbfinal + dif);
                 difs.push(dif);
                 if (dif > 0) {
                     pluschar = "+";
@@ -152,6 +207,7 @@ function handleSpeed(splits, smooth) {
             }
             mylog.push([correctClicks.toString(), mytimestring, pbsplittext, score.toString() + "%", curTask + " (" + (splittime / 1000).toString() + ")"]);
             if (questionCount == correctClicks) {
+                var runtime = mytimes.slice(-1)[0];
                 speedData = splittimeList;
                 var dmcb = document.getElementById("chkDarkMode");
                 isDarkMode = dmcb.checked;
@@ -160,11 +216,23 @@ function handleSpeed(splits, smooth) {
                     if (!pbisdef) {
                         savePBs = true;
                     } else {
-                        if (pbfinal > mytimes.slice(-1)[0]) {
+                        if (pbfinal > runtime) {
                             savePBs = true;
                         }
                     }
                 }
+                pbhistlist = GM_getValue(historySlotTxt + gameSave);
+                if (pbhistlist === undefined) {
+                    pbhistlist = [];
+                }
+                pbhistlist.push({
+                    "Time": runtime / 1000,
+                    "Score": score,
+                    "Date": (new Date()).toJSON().slice(0, 10),
+                    "ID": pbhistlist.length + 1,
+                    "PB": savePBs
+                });
+                GM_setValue(historySlotTxt + gameSave, pbhistlist)
                 saved = "No PB";
                 if (savePBs) {
                     saved = "New PB!";
@@ -226,6 +294,25 @@ function handleSpeed(splits, smooth) {
                 slider.style.margin = "1.65%";
                 statsDiv.appendChild(slider);
                 statsDiv.appendChild(cnvSpeed);
+                var historyGraphHeader = document.createElement("p");
+                historyGraphHeader.style.textAlign = "center";
+                historyGraphHeader.style.fontSize = "18pt";
+                historyGraphHeader.appendChild(document.createTextNode("Runs history"));
+                statsDiv.appendChild(historyGraphHeader);
+                var onlytodaycb = document.createElement("input");
+                onlytodaycb.type = 'checkbox';
+                onlytodaycb.id = "onlytodaycb";
+                onlytodaycb.style.width = "100%";
+                var cblabelP = document.createElement("p");
+                cblabelP.style.textAlign = "center";
+                cblabelP.innerHTML="Check to show today's only";
+                statsDiv.appendChild(cblabelP);
+                statsDiv.appendChild(onlytodaycb);
+                historygraphdata = setHistoryData(pbhistlist, onlytodaycb.checked);
+                var cnvHistory = document.createElement("canvas");
+                cnvHistory.style.width = "100%";
+                cnvHistory.height = 600;
+                statsDiv.appendChild(cnvHistory);
                 timesSets.push({
                     data: mytimes.map(function (item) {
                         return item / 1000
@@ -276,7 +363,7 @@ function handleSpeed(splits, smooth) {
                     data: {
                         labels: Array.from({
                             length: questionCount
-                        }, (_, i) => i + 1),
+                        }, (_, i) => (i + 1).toString()),
                         datasets: timesSets
                     },
                     options: {
@@ -290,6 +377,23 @@ function handleSpeed(splits, smooth) {
                             intersect: false
                         },
                         plugins: {
+                            zoom: {
+                                pan: {
+                                    enabled: true,
+                                    mode: 'x',
+                                },
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                        speed: 0.1,
+                                    },
+                                    mode: 'x',
+                                    limits: {
+                                        y: { min: 0 },
+                                        x: { min: 0 }
+                                    }
+                                }
+                            },
                             tooltip: {
                                 callbacks: {
                                     title: function (context) {
@@ -305,7 +409,7 @@ function handleSpeed(splits, smooth) {
                     data: {
                         labels: Array.from({
                             length: questionCount
-                        }, (_, i) => i + 1),
+                        }, (_, i) => (i + 1).toString()),
                         datasets: speedSets
                     },
                     options: {
@@ -319,10 +423,91 @@ function handleSpeed(splits, smooth) {
                             intersect: false
                         },
                         plugins: {
+                            zoom: {
+                                pan: {
+                                    enabled: true,
+                                    mode: 'x',
+                                },
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                        speed: 0.1,
+                                    },
+                                    mode: 'x',
+                                    limits: {
+                                        y: { min: 0 },
+                                        x: { min: 0 }
+                                    }
+                                }
+                            },
                             tooltip: {
                                 callbacks: {
                                     title: function (context) {
                                         return taskinfo[context[0].dataIndex].task;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                chart3 = new Chart(cnvHistory, {
+                    type: "line",
+                    data: {
+                        labels: Array.from({
+                            length: pbhistlist.length
+                        }, (_, i) => (i + 1).toString()),
+                        datasets: historygraphdata
+                    },
+                    options: {
+                        responsive: false,
+                        animation: {
+                            duration: 0
+                        },
+                        interaction: {
+                            mode: 'index',
+                            axis: 'xy',
+                            intersect: false
+                        },
+                        plugins: {
+                            zoom: {
+                                pan: {
+                                    enabled: true,
+                                    mode: 'x',
+                                },
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                        speed: 0.1,
+                                    },
+                                    mode: 'x',
+                                    limits: {
+                                        y: { min: 0 },
+                                        x: { min: 0 }
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function (context) {
+                                        var myitem = pbhistlist[context[0].dataIndex];
+                                        var mystring = myitem.Time.toString();
+                                        return mystring;
+                                    },
+                                    label: function (context) {
+                                        var myitem = pbhistlist[context.dataIndex];
+                                        if (myitem.PB) {
+                                            return "PB!";
+                                        }
+                                        if (myitem.Score == 100) {
+                                            return "100%!";
+                                        }
+                                        return "" + myitem.Score.toString() + "%";
+                                    },
+                                    footer: function (context) {
+                                        var myitem = pbhistlist[context[0].dataIndex];
+                                        var mystring = myitem.Date;
+                                        mystring += "\n" + "#" + myitem.ID.toString();
+                                        return mystring;
                                     }
                                 }
                             }
@@ -401,6 +586,11 @@ function handleSpeed(splits, smooth) {
                     tr.appendChild(td);
                 });
                 statsDiv.appendChild(tbl);
+                onlytodaycb.onclick = function () {
+                    historygraphdata = setHistoryData(pbhistlist, onlytodaycb.checked);
+                    chart3.data.datasets = historygraphdata;
+                    chart3.update();
+                }
                 slider.oninput = function () {
                     sliderValueP.innerHTML = parseInt(slider.value) + 1;
                     var newsets = []
