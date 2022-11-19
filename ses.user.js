@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name SES: Seterra easy splitter
 // @namespace http://tampermonkey.net/
-// @version 1.6.2
+// @version 1.6.3
 // @description keep track of your progress!
 // @author dphdmn
 // @match https://www.geoguessr.com/seterra/*
@@ -12,6 +12,55 @@
 // @require https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js
 // @require https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.2.1/chartjs-plugin-zoom.min.js
 // ==/UserScript==
+
+var my_correct = 0;
+var lastTask = qText;
+var curTask;
+var mytime;
+var mylog = [];
+var mytimes = [];
+var tbl;
+var dif;
+var t;
+var saved = "";
+var pbs = [];
+var colors = [];
+var difs = [];
+var gameSave;
+var pbisdef;
+var pbsplit;
+var pbsplittext;
+var resetbutton;
+var mytimestring;
+var pbinfo;
+var pluschar;
+var tasktimes = [];
+var latesttime = 0;
+var splittime;
+var speedData = [];
+var splittimeList = [];
+var isDarkMode;
+var speedDataPB;
+var sliderValueP;
+var speedSets = [];
+var timesSets = [];
+var pacedata = [];
+var speedpace = [];
+var historygraphdata = [];
+var pbfinal;
+var chart1;
+var chart2;
+var chart3;
+var pbhistlist;
+const speedDataTxt = "SPEED_DATA_";
+const historySlotTxt = "PB_HISTORY";
+var savePBs = false;
+const headers = ["N", "Time", "PB split", "Score", "Task"]
+mylog.push(headers)
+const container = document.getElementById('gameselect');
+const statsDiv = document.createElement('div');
+container.appendChild(statsDiv);
+
 function handleSpeed(splits, smooth) {
     var subsum;
     var subam;
@@ -78,54 +127,36 @@ function setHistoryData(historyData, checkdata) {
     return result;
 }
 
+function myupdateGame(){
+    statsDiv.innerHTML = "";
+    my_correct = 0;
+    lastTask = qText;
+    mylog = [];
+    pbs = [];
+    mytimes = [];
+    colors = [];
+    difs = [];
+    tasktimes = [];
+    speedData = [];
+    splittimeList = [];
+    speedSets = [];
+    timesSets = [];
+    pacedata = [];
+    speedpace = [];
+    historygraphdata = [];
+    latesttime = 0;
+    mylog.push(headers);
+}
+
 (function () {
     'use strict';
+    var resetGameButton = document.getElementById("cmdRestart");
+    resetGameButton.onclick = function(){setReviewMode(0);setGameMode();myupdateGame();return false};
+    resetGameButton.type = "button";
     var mycss = ".table{margin:0 0 40px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.2);display:table}.row{display:table-row;background:#f6f6f6}.row:nth-of-type(odd){background:#e9e9e9}.row:first-child{font-weight:900;color:#fff;background:#1f7a7d}.row.green{background:#27ae60}.row.blue{background:#2980b9}.cell{padding:6px 12px;display:table-cell}@media screen and (max-width:580px){.table{display:block}.row{padding:14px 0 7px;display:block}.row.header{padding:0;height:6px}.row.header .cell{display:none}.row .cell{margin-bottom:10px}.row .cell:before{margin-bottom:3px;content:attr(data-title);min-width:98px;font-size:10px;line-height:10px;font-weight:700;text-transform:uppercase;color:#969696;display:block}.cell{padding:2px 16px;display:block}}";
     var style = document.createElement('style');
     style.innerHTML = mycss;
     document.head.appendChild(style);
-    var my_correct = 0;
-    var lastTask = qText;
-    var curTask;
-    var mytime;
-    var mylog = [];
-    var mytimes = [];
-    var tbl;
-    var dif;
-    var t;
-    var saved = "";
-    var pbs = [];
-    var colors = [];
-    var difs = [];
-    var gameSave;
-    var pbisdef;
-    var pbsplit;
-    var pbsplittext;
-    var resetbutton;
-    var mytimestring;
-    var pbinfo;
-    var pluschar;
-    var tasktimes = [];
-    var latesttime = 0;
-    var splittime;
-    var speedData = [];
-    var splittimeList = [];
-    var isDarkMode;
-    var speedDataPB;
-    var sliderValueP;
-    var speedSets = [];
-    var timesSets = [];
-    var pacedata = [];
-    var speedpace = [];
-    var historygraphdata = [];
-    var pbfinal;
-    var chart1;
-    var chart2;
-    var chart3;
-    var pbhistlist;
-    const speedDataTxt = "SPEED_DATA_";
-    const historySlotTxt = "PB_HISTORY";
-    var savePBs = false;
     resetbutton = document.createElement("button");
     resetbutton.type = "button";
     resetbutton.innerHTML = 'Reset PB splits for that gamemode';
@@ -135,32 +166,8 @@ function setHistoryData(historyData, checkdata) {
         GM_setValue(historySlotTxt + gameSave, undefined);
         alert("Your PBs very successfully removed from the Earth! (for this mode only, don't worry)");
     };
-    const headers = ["N", "Time", "PB split", "Score", "Task"]
-    mylog.push(headers)
-    const container = document.getElementById('gameselect');
-    const statsDiv = document.createElement('div');
-    container.appendChild(statsDiv)
+    
     addEventListener('click', (event) => {
-        if (correctClicks == 0) {
-            statsDiv.innerHTML = "";
-            my_correct = 0;
-            lastTask = qText;
-            mylog = [];
-            pbs = [];
-            mytimes = [];
-            colors = [];
-            difs = [];
-            tasktimes = [];
-            speedData = [];
-            splittimeList = [];
-            speedSets = [];
-            timesSets = [];
-            pacedata = [];
-            speedpace = [];
-            historygraphdata = [];
-            latesttime = 0;
-            mylog.push(headers)
-        }
         if (correctClicks == 1) {
             gameSave = gameMode + window.location.href;
             pbs = GM_getValue(gameSave)
@@ -175,7 +182,6 @@ function setHistoryData(historyData, checkdata) {
             curTask = lastTask;
             lastTask = qText;
             t = gameDuration;
-            console.log(correctClicks, t, curTask, lastTask, score);
             mytime = t / 1000;
             mytimes.push(t);
             splittime = t - latesttime;
