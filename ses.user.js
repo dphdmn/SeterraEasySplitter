@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name SES: Seterra easy splitter
 // @namespace http://tampermonkey.net/
-// @version 1.6.3
+// @version 1.6.4
 // @description keep track of your progress!
 // @author dphdmn
 // @match https://www.geoguessr.com/seterra/*
@@ -127,7 +127,7 @@ function setHistoryData(historyData, checkdata) {
     return result;
 }
 
-function myupdateGame(){
+function myupdateGame() {
     statsDiv.innerHTML = "";
     my_correct = 0;
     lastTask = qText;
@@ -151,7 +151,12 @@ function myupdateGame(){
 (function () {
     'use strict';
     var resetGameButton = document.getElementById("cmdRestart");
-    resetGameButton.onclick = function(){setReviewMode(0);setGameMode();myupdateGame();return false};
+    resetGameButton.onclick = function () { 
+        setReviewMode(0); 
+        setGameMode(); 
+        myupdateGame(); 
+        return false 
+    };
     resetGameButton.type = "button";
     var mycss = ".table{margin:0 0 40px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.2);display:table}.row{display:table-row;background:#f6f6f6}.row:nth-of-type(odd){background:#e9e9e9}.row:first-child{font-weight:900;color:#fff;background:#1f7a7d}.row.green{background:#27ae60}.row.blue{background:#2980b9}.cell{padding:6px 12px;display:table-cell}@media screen and (max-width:580px){.table{display:block}.row{padding:14px 0 7px;display:block}.row.header{padding:0;height:6px}.row.header .cell{display:none}.row .cell{margin-bottom:10px}.row .cell:before{margin-bottom:3px;content:attr(data-title);min-width:98px;font-size:10px;line-height:10px;font-weight:700;text-transform:uppercase;color:#969696;display:block}.cell{padding:2px 16px;display:block}}";
     var style = document.createElement('style');
@@ -166,7 +171,7 @@ function myupdateGame(){
         GM_setValue(historySlotTxt + gameSave, undefined);
         alert("Your PBs very successfully removed from the Earth! (for this mode only, don't worry)");
     };
-    
+
     addEventListener('click', (event) => {
         if (correctClicks == 1) {
             gameSave = gameMode + window.location.href;
@@ -313,7 +318,7 @@ function myupdateGame(){
                 onlytodaycb.style.width = "100%";
                 var cblabelP = document.createElement("p");
                 cblabelP.style.textAlign = "center";
-                cblabelP.innerHTML="Check to show today's only";
+                cblabelP.innerHTML = "Check to show today's only";
                 statsDiv.appendChild(cblabelP);
                 statsDiv.appendChild(onlytodaycb);
                 historygraphdata = setHistoryData(pbhistlist, onlytodaycb.checked);
