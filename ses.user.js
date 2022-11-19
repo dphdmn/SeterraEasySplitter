@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name SES: Seterra easy splitter
 // @namespace http://tampermonkey.net/
-// @version 1.5
+// @version 1.6.1
 // @description keep track of your progress!
 // @author dphdmn
 // @match https://www.geoguessr.com/seterra/*
@@ -230,8 +230,10 @@ function setHistoryData(historyData, checkdata) {
                     "Score": score,
                     "Date": (new Date()).toJSON().slice(0, 10),
                     "ID": pbhistlist.length + 1,
-                    "PB": savePBs
+                    "PB": savePBs,
+                    "SplitTimes": splittimeList
                 });
+                console.log(pbhistlist);
                 GM_setValue(historySlotTxt + gameSave, pbhistlist)
                 saved = "No PB";
                 if (savePBs) {
