@@ -1,3 +1,5 @@
+2023 update: does not work because new website, thank's, seterra!
+
 # SeterraEasySplitter
 AutoSplitter for [Seterra](https://www.geoguessr.com/seterra/)
 
