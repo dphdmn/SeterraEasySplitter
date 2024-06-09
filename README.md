@@ -1,5 +1,12 @@
 # SeterraEasySplitter
-An AutoSplitter for [Seterra](https://www.geoguessr.com/quiz/seterra).
+
+SeterraEasySplitter is an AutoSplitter designed for [Seterra](https://www.geoguessr.com/quiz/seterra), a geography quiz game. It functions independently from gameplay, with its **effects becoming apparent only after the game has concluded**.
+
+This tool offers time splits for each clicked region, enhancing post-game analysis. Additionally, it provides multiple graphs and maintains a history of runs and personal bests (PBs) for any map.
+
+With the release of version 2.0.0, the migration process posed significant challenges, resulting in the use of a custom timer for time splits. As a result, the provided splits may be approximately ~0.1s slower than official in-game time. Importantly, this discrepancy has **no impact on in-game performance or outcomes**.
+
+The primary objective of SeterraEasySplitter is to furnish users with comprehensive statistics to facilitate detailed tracking of their progress and individual runs.
 
 ## Installation
 1. Install [Monkey](https://www.tampermonkey.net/index.php?ext=dhdg&browser=chrome).
