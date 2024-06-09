@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name SES: Seterra easy splitter
 // @namespace http://tampermonkey.net/
-// @version 1.6.4
-// @description keep track of your progress!
+// @version 2.0.0
+// @description keep track of your progress! reborn to work with new version
 // @author dphdmn
-// @match https://www.geoguessr.com/seterra/*
+// @match https://www.geoguessr.com/vgp/*
 // @icon https://www.google.com/s2/favicons?sz=64&domain=geoguessr.com
 // @grant GM_setValue
 // @grant GM_getValue
@@ -13,8 +13,173 @@
 // @require https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.2.1/chartjs-plugin-zoom.min.js
 // ==/UserScript==
 
+function findRestartButton() {
+  const buttons = document.querySelectorAll('button'); // Get all button elements
+  let restartButton;
+
+  buttons.forEach(button => {
+    if (button.innerHTML.includes('Restart')) { // Check if the button's HTML content includes "Restart"
+      restartButton = button; // Assign the button element to restartButton variable
+    }
+  });
+
+  return restartButton; // Return the restartButton element
+}
+
+//get current gamemodefor unique pbs
+function gameMode() {
+    // Find the fieldset element starting with the specified class
+    const fieldSet = document.querySelector('[class^="game-footer_gameMode"]');
+
+    // If no fieldset element is found, return null
+    if (!fieldSet) {
+        return null;
+    }
+
+    // Get the checked radio button within the fieldset
+    const checkedRadioButton = fieldSet.querySelector('input[type="radio"]:checked');
+
+    // If no checked radio button is found, return null
+    if (!checkedRadioButton) {
+        return null;
+    }
+
+    // Get the span element associated with the checked radio button
+    const gameMode = checkedRadioButton.nextElementSibling.nextSibling;
+
+    // Return the current game mode
+    return gameMode.data;
+}
+
+function parseGameMapHeader() {
+    // Find the element using the data-qa attribute
+    let element = document.querySelector('div[data-qa="game-map-header"]');
+
+    if (!element) {
+        // If the element is not found, return null or handle the error as needed
+        return null;
+    }
+
+    // Extract the spans within the element
+    let spans = element.querySelectorAll('span');
+
+    // Initialize variables with null as default values
+    let correctTotal = null;
+    let successRate = null;
+    let timeString = null;
+    let country = null;
+
+    // Extract values if spans are present
+    if (spans.length > 0) {
+        correctTotal = spans[0].textContent;
+    }
+    if (spans.length > 1) {
+        successRate = spans[1].textContent.replace('%', ''); // Remove the % symbol
+    }
+    if (spans.length > 2) {
+        timeString = spans[2].textContent;
+    }
+    if (spans.length > 3) {
+        let strongElement = spans[3].querySelector('strong');
+        if (strongElement) {
+            country = strongElement.textContent;
+        }
+    }
+
+    // Initialize parsed values with null as default values
+    let correct = null;
+    let total = null;
+    let totalSeconds = null;
+
+    // Parse correct/total if available
+    if (correctTotal !== null) {
+        let parts = correctTotal.split('/');
+        if (parts.length === 2) {
+            correct = parseInt(parts[0], 10);
+            total = parseInt(parts[1], 10);
+        }
+    }
+
+    // Parse successRate if available
+    if (successRate !== null) {
+        successRate = parseInt(successRate, 10);
+    }
+
+    // Convert the MM:SS time string to total seconds if available
+    if (timeString !== null) {
+        let timeParts = timeString.split(':').map(Number);
+        if (timeParts.length === 2) {
+            let [minutes, seconds] = timeParts;
+            totalSeconds = (minutes * 60) + seconds;
+        }
+    }
+
+    return {
+        correct: correct,
+        total: total,
+        successRate: successRate,
+        totalSeconds: totalSeconds,
+        country: country
+    };
+}
+
+function getContainer(){
+   let container = document.querySelector("article");
+   container.innerHTML = "";
+   return container;
+}
+
+//total time of the game
+function gameDuration() {
+    if (startTime === null) {
+        return 0;
+    } else {
+        const currentTime = new Date();
+        const duration = currentTime - startTime; // Difference in milliseconds
+        return duration;
+    }
+}
+
+//success rate %
+function score(){
+    return parseGameMapHeader().successRate;
+}
+
+function qTextFirst() {
+    return new Promise((resolve, reject) => {
+        let headerData = parseGameMapHeader();
+        let country = null;
+        const intervalId = setInterval(() => {
+                headerData = parseGameMapHeader();
+                if (headerData.country !== null) {
+                    clearInterval(intervalId);
+                    resolve(headerData.country);
+                }
+            }, 10);
+    });
+}
+
+//name of current (latest) task
+function qText() {
+    return parseGameMapHeader().country;
+}
+
+//total amount of questions in quiz
+function questionCount(){
+    return parseGameMapHeader().total;
+}
+
+//clicks done correctly
+function correctClicks(){
+    return parseGameMapHeader().correct;
+}
+var startTime;
 var my_correct = 0;
-var lastTask = qText;
+qTextFirst().then(country => {
+    lastTask = country;
+    startTime = new Date().getTime();
+})
+var lastTask = qText();
 var curTask;
 var mytime;
 var mylog = [];
@@ -39,7 +204,6 @@ var latesttime = 0;
 var splittime;
 var speedData = [];
 var splittimeList = [];
-var isDarkMode;
 var speedDataPB;
 var sliderValueP;
 var speedSets = [];
@@ -52,12 +216,14 @@ var chart1;
 var chart2;
 var chart3;
 var pbhistlist;
+var restartButton = findRestartButton();
+
 const speedDataTxt = "SPEED_DATA_";
 const historySlotTxt = "PB_HISTORY";
 var savePBs = false;
 const headers = ["N", "Time", "PB split", "Score", "Task"]
 mylog.push(headers)
-const container = document.getElementById('gameselect');
+const container = getContainer();
 const statsDiv = document.createElement('div');
 container.appendChild(statsDiv);
 
@@ -127,10 +293,24 @@ function setHistoryData(historyData, checkdata) {
     return result;
 }
 
-function myupdateGame() {
+var minCheckTime = 50; //ms before init (because game title updates slowly)
+var timerINT; // Global variable to hold the interval reference
+function setupTimer(startTime) {
+    timerINT = setInterval(function() {
+        var currentTime = new Date().getTime();
+        var elapsedTime = currentTime - startTime;
+
+        if (elapsedTime >= minCheckTime) {
+            clearInterval(timerINT); // Stop checking timer every 10ms
+            restOfTheInitCode();
+        }
+    }, 10);
+}
+
+function restOfTheInitCode() {
     statsDiv.innerHTML = "";
     my_correct = 0;
-    lastTask = qText;
+    lastTask = qText();
     mylog = [];
     pbs = [];
     mytimes = [];
@@ -148,16 +328,24 @@ function myupdateGame() {
     mylog.push(headers);
 }
 
+function myupdateGame() {
+    startTime = new Date().getTime(); // Get current time
+    setupTimer(startTime);
+}
+
 (function () {
     'use strict';
-    var resetGameButton = document.getElementById("cmdRestart");
-    resetGameButton.onclick = function () { 
-        setReviewMode(0); 
-        setGameMode(); 
-        myupdateGame(); 
-        return false 
-    };
-    resetGameButton.type = "button";
+    restartButton.addEventListener('click', function() {
+        //console.log("restart");
+        myupdateGame();
+    });
+    window.addEventListener('keydown', function(e) {
+        if (e.altKey == true && e.keyCode == 82){
+            //console.log('Alt + R');
+            myupdateGame();
+        }
+    });
+
     var mycss = ".table{margin:0 0 40px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.2);display:table}.row{display:table-row;background:#f6f6f6}.row:nth-of-type(odd){background:#e9e9e9}.row:first-child{font-weight:900;color:#fff;background:#1f7a7d}.row.green{background:#27ae60}.row.blue{background:#2980b9}.cell{padding:6px 12px;display:table-cell}@media screen and (max-width:580px){.table{display:block}.row{padding:14px 0 7px;display:block}.row.header{padding:0;height:6px}.row.header .cell{display:none}.row .cell{margin-bottom:10px}.row .cell:before{margin-bottom:3px;content:attr(data-title);min-width:98px;font-size:10px;line-height:10px;font-weight:700;text-transform:uppercase;color:#969696;display:block}.cell{padding:2px 16px;display:block}}";
     var style = document.createElement('style');
     style.innerHTML = mycss;
@@ -173,8 +361,8 @@ function myupdateGame() {
     };
 
     addEventListener('click', (event) => {
-        if (correctClicks == 1) {
-            gameSave = gameMode + window.location.href;
+        if (correctClicks() == 1) {
+            gameSave = gameMode() + window.location.href;
             pbs = GM_getValue(gameSave)
             speedDataPB = GM_getValue(speedDataTxt + gameSave)
             pbisdef = (pbs !== undefined);
@@ -182,19 +370,19 @@ function myupdateGame() {
                 pbfinal = pbs.slice(-1)[0];
             }
         }
-        if (correctClicks > my_correct) {
-            my_correct = correctClicks;
+        if (correctClicks() > my_correct) {
+            my_correct = correctClicks();
             curTask = lastTask;
-            lastTask = qText;
-            t = gameDuration;
+            lastTask = qText();
+            t = gameDuration();
             mytime = t / 1000;
             mytimes.push(t);
             splittime = t - latesttime;
             splittimeList.push(splittime / 1000);
             latesttime = t;
-            speedpace.push(questionCount * mytime / correctClicks)
+            speedpace.push(questionCount() * mytime / correctClicks())
             tasktimes.push({
-                "task": "(" + correctClicks.toString() + ") " + curTask,
+                "task": "(" + correctClicks().toString() + ") " + curTask,
                 "time": splittime
             });
             if (!pbisdef) {
@@ -203,7 +391,7 @@ function myupdateGame() {
                 colors.push("Green");
                 mytimestring = mytime.toString();
             } else {
-                pbsplit = pbs[correctClicks - 1];
+                pbsplit = pbs[correctClicks() - 1];
                 dif = t - pbsplit;
                 pacedata.push(pbfinal + dif);
                 difs.push(dif);
@@ -217,14 +405,12 @@ function myupdateGame() {
                 pbsplittext = (pbsplit / 1000).toString();
                 mytimestring = mytime.toString() + " (" + pluschar + (dif / 1000).toString() + ")";
             }
-            mylog.push([correctClicks.toString(), mytimestring, pbsplittext, score.toString() + "%", curTask + " (" + (splittime / 1000).toString() + ")"]);
-            if (questionCount == correctClicks) {
+            mylog.push([correctClicks().toString(), mytimestring, pbsplittext, score().toString() + "%", curTask + " (" + (splittime / 1000).toString() + ")"]);
+            if (questionCount() == correctClicks()) {
                 var runtime = mytimes.slice(-1)[0];
                 speedData = splittimeList;
-                var dmcb = document.getElementById("chkDarkMode");
-                isDarkMode = dmcb.checked;
                 savePBs = false;
-                if (score == 100) {
+                if (score() == 100) {
                     if (!pbisdef) {
                         savePBs = true;
                     } else {
@@ -239,7 +425,7 @@ function myupdateGame() {
                 }
                 pbhistlist.push({
                     "Time": runtime / 1000,
-                    "Score": score,
+                    "Score": score(),
                     "Date": (new Date()).toJSON().slice(0, 10),
                     "ID": pbhistlist.length + 1,
                     "PB": savePBs,
@@ -298,10 +484,10 @@ function myupdateGame() {
                 statsDiv.appendChild(sliderValueP);
                 var slider = document.createElement("input");
                 slider.type = 'range';
-                slider.value = questionCount - 1;
+                slider.value = questionCount() - 1;
                 sliderValueP.innerHTML = parseInt(slider.value) + 1;
                 slider.min = 0;
-                slider.max = questionCount - 1;
+                slider.max = questionCount() - 1;
                 slider.step = 1;
                 slider.style.width = "98.3%";
                 slider.style.margin = "1.65%";
@@ -375,11 +561,12 @@ function myupdateGame() {
                     type: "line",
                     data: {
                         labels: Array.from({
-                            length: questionCount
+                            length: questionCount()
                         }, (_, i) => (i + 1).toString()),
                         datasets: timesSets
                     },
                     options: {
+                        devicePixelRatio: 4,
                         responsive: false,
                         animation: {
                             duration: 0
@@ -421,11 +608,12 @@ function myupdateGame() {
                     type: "line",
                     data: {
                         labels: Array.from({
-                            length: questionCount
+                            length: questionCount()
                         }, (_, i) => (i + 1).toString()),
                         datasets: speedSets
                     },
                     options: {
+                        devicePixelRatio: 4,
                         responsive: false,
                         animation: {
                             duration: 0
@@ -472,6 +660,7 @@ function myupdateGame() {
                         datasets: historygraphdata
                     },
                     options: {
+                        devicePixelRatio: 4,
                         responsive: false,
                         animation: {
                             duration: 0
@@ -538,7 +727,7 @@ function myupdateGame() {
                 mylog.forEach((row, rowindex) => {
                     const tr = document.createElement('div');
                     tr.classList.add("row");
-                    if (isDarkMode && rowindex > 0) {
+                    if (rowindex > 0) {
                         if (rowindex % 2 == 0) {
                             tr.style.background = "#303030";
                         } else {
@@ -578,7 +767,7 @@ function myupdateGame() {
                 tasktimes.forEach((row, rowindex) => {
                     const tr = document.createElement('div');
                     tr.classList.add("row");
-                    if (isDarkMode && rowindex > 0) {
+                    if (rowindex > 0) {
                         if (rowindex % 2 == 0) {
                             tr.style.background = "#303030";
                         } else {
