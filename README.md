@@ -1,6 +1,6 @@
 # SeterraEasySplitter
 
-SeterraEasySplitter is an AutoSplitter designed for [Seterra](https://www.geoguessr.com/quiz/seterra), a geography quiz game. It functions independently from gameplay, with its **effects becoming apparent only after the game has concluded**.
+SeterraEasySplitter is an AutoSplitter designed for [Seterra](https://www.geoguessr.com/quiz/seterra), a geography quiz game. It functions independently from gameplay, with its *effects becoming apparent only after the game has concluded*.
 
 This tool offers time splits for each clicked region, enhancing post-game analysis. Additionally, it provides multiple graphs and maintains a history of runs and personal bests (PBs) for any map.
 
