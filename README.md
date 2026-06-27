@@ -1,3 +1,9 @@
+# 2026 version
+
+# # The new version will only be updated [here](https://greasyfork.org/en/scripts/584593-ses-seterra-easy-splitter).
+
+This repo is for archive purposes only.
+
 # SeterraEasySplitter
 
 SeterraEasySplitter is an AutoSplitter designed for [Seterra](https://www.geoguessr.com/quiz/seterra), a geography quiz game. It functions independently from gameplay, with its *effects becoming apparent only after the game has concluded*.
